@@ -9,13 +9,13 @@ on:
 
 jobs:
   terraform:
-    name: 'Terraform Validation and Plan'
+    name: 'Terraform Validation'
     runs-on: ubuntu-latest
     # The permissions block is needed to grant read permissions to contents for forks.
     permissions:
      contents: read
      pull-requests: write
-     statuses: read
+    #  statuses: read
 
     steps:
       - name: Checkout code

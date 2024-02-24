@@ -1,43 +1,53 @@
 variable "project_id" {
-  description = "The id of the project"
-  type        = string
+  description = "The GCP project ID"
 }
-variable "credentials_file" {
-  description = "The GCP credentials file path"
-  type        = string
-}
+
 variable "region" {
-  description = "custom_region"
-  type        = string
+  description = "The GCP region to deploy resources into"
 }
 
-variable "zone" {
-  description = "custom_zone"
-  type        = string
-}
-
-variable "vpc_name" {
-  description = "customization of VPC"
-  type        = string
-}
-
-variable "subnets" {
-  description = "The map of custom subnets"
+variable "vpcs" {
+  description = "A map of VPC configurations"
   type = map(object({
-    name          = string
-    ip_cidr_range = string
-    region        = string
+    subnets = list(object({
+      name          = string
+      ip_cidr_range = string
+      allow_ports = list(number)
+    }))
   }))
 }
 
-variable "routes" {
-  description = "The map of custom routes"
-  type = map(object({
-    name              = string
-    dest_range        = string
-    next_hop_internet = bool
-    description       = string
-    tags              = list(string)
-  }))
-}
+# variable "zone" {
+#   description = "The GCP zone to deploy resources into"
+#   type        = string
+# }
 
+# variable "custom_image_self_link" {
+#   description = "The self_link of the custom image built with Packer"
+#   type        = string
+# }
+
+# variable "vpc_self_link" {
+#   description = "The self_link of the VPC where the instance will be deployed"
+#   type        = string
+# }
+
+# variable "service_account_email" {
+#   description = "The email of the service account for the instance"
+#   type        = string
+# }
+
+# variable "instances_configuration" {
+#   description = "A map of instance configurations"
+#   type = map(object({
+#     name                = string
+#     machine_type        = string
+#     zone                = string
+#     network             = string
+#     subnetwork          = string
+#     boot_image          = string
+#     boot_disk_type      = string
+#     boot_disk_size_gb   = number
+#     tags                = list(string)
+#   }))
+# }

@@ -170,3 +170,30 @@ variable "spl" {
   type    = bool
   default = false
 }
+
+//Variables for DNS-A record
+variable "dns-name" {
+  type    = string
+  default = "poojacloud24.pw."
+}
+variable "recordtype" {
+  type    = string
+  default = "A"
+}
+variable "ttl" {
+  type    = string
+  default = "300"
+
+}
+variable "managedzonename" {
+  type    = string
+  default = "cloud-demo-pw"
+}
+
+//Variables for Service account 
+variable "serviceid" {
+  type = string
+}
+variable "serviceaccname" {
+  type = string
+}

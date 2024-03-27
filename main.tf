@@ -28,7 +28,7 @@ resource "google_compute_instance" "terraform_instance" {
       size  = var.boot_disk_size_gb
     }
   }
-
+  allow_stopping_for_update = true
   network_interface {
     subnetwork = google_compute_subnetwork.terraform_subnet["subnet1"].self_link
     access_config {}
@@ -37,7 +37,7 @@ resource "google_compute_instance" "terraform_instance" {
 
   service_account {
     email  = google_service_account.service_account.email
-    scopes = ["logging-write", "monitoring-write"]
+    scopes = ["logging-write", "monitoring-write", "pubsub"]
   }
 }
 
@@ -68,6 +68,32 @@ resource "google_project_iam_binding" "service_account_metric_writer" {
     "serviceAccount:${google_service_account.service_account.email}"
   ]
 }
+
+resource "google_project_iam_binding" "pubsub_publisher" {
+  project = var.project_id
+  role    = "roles/pubsub.publisher"
+
+  members = [
+    "serviceAccount:${google_service_account.service_account.email}",
+  ]
+}
+
+resource "google_project_iam_binding" "pubsub_subscriber" {
+  project = var.project_id
+  role    = "roles/pubsub.subscriber"
+
+  members = [
+    "serviceAccount:${google_service_account.service_account.email}",
+  ]
+}
+# resource "google_project_iam_binding" "pubsub_invoker" {
+#   project = var.project_id
+#   role    = "roles/cloudfunctions.invoker"
+
+#   members = [
+#     "serviceAccount:${google_service_account.service_account.email}",
+#   ]
+# }
 
 
 //DNS A-RECORD SETUP

@@ -197,3 +197,43 @@ variable "serviceid" {
 variable "serviceaccname" {
   type = string
 }
+
+//PubSub variables
+variable "pub_name" {
+  type = string
+}
+variable "ret_time" {
+  type    = string
+  default = "604800s"
+}
+variable "sub_name" {
+  type = string
+}
+
+variable "ack" {
+  type    = string
+  default = "20"
+}
+
+variable "connector" {
+  type    = string
+  default = "serverlessvpc"
+}
+variable "serverlessip" {
+  type    = string
+  default = "10.0.3.0/28"
+}
+variable "fun_entrypoint" {
+  type    = string
+  default = "newUserAccount"
+}
+
+variable "mailgun_api_key" {
+  type    = string
+  default = "c866ff59ac6b06a600bd18469e6a6351-f68a26c9-0e033e20"
+}
+
+variable "mydomain_name" {
+  type    = string
+  default = "poojacloud24.pw"
+}

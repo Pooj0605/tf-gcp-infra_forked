@@ -45,7 +45,7 @@ resource "google_compute_firewall" "allow_application_traffic" {
     ports    = [tostring(var.application_port)]
   }
 
-  source_ranges = [var.source_ranges]
+  source_ranges = [google_compute_global_address.lb_ip.address]
 }
 
 resource "google_compute_firewall" "deny_ssh_traffic" {
@@ -70,3 +70,21 @@ resource "google_compute_route" "route" {
   tags             = each.value.tags
   next_hop_gateway = each.value.next_hop_internet ? "default-internet-gateway" : null
 }
+
+resource "google_compute_firewall" "allow_lb_health_checks" {
+  name    = "allow-lb-health-checks"
+  network = google_compute_network.terraform_network.id
+
+  allow {
+    protocol = "tcp"
+    ports    = ["8080"]
+  }
+
+  source_ranges = ["130.211.0.0/22", "35.191.0.0/16"]
+
+  target_tags   = ["webapp"]
+}
+
+
+
+

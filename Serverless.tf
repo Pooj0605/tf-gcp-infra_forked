@@ -1,6 +1,6 @@
 resource "google_pubsub_topic" "terraform-pub" {
   name                       = var.pub_name
-  message_retention_duration = var.ret_time # 7 days in seconds
+  message_retention_duration = var.ret_time
 }
 
 resource "google_pubsub_subscription" "terraform-sub" {
@@ -11,40 +11,39 @@ resource "google_pubsub_subscription" "terraform-sub" {
 }
 
 data "archive_file" "function_source" {
-  type        = "zip"
+  type        = var.type
   source_dir  = "${path.module}/Cloud_Function"
-  output_path = "${path.module}/finaltestserverless.zip"
+  output_path = "${path.module}/lb.zip"
 
 }
 
 resource "google_storage_bucket_object" "function_source" {
-  name   = "finaltestserverless.zip"
+  name   = "lb.zip"
   bucket = google_storage_bucket.functions_bucket.name
   source = data.archive_file.function_source.output_path
 }
 
 resource "google_cloudfunctions2_function" "verify_email_function" {
   location = var.region
-  name     = "testingserverlessfn"
-
+  name     = var.cloudfn
 
   build_config {
-    runtime     = "nodejs20"
+    runtime     = var.runtime
     entry_point = var.fun_entrypoint
     source {
       storage_source {
         bucket = google_storage_bucket.functions_bucket.name
-        object = "finaltestserverless.zip"
+        object = "lb.zip"
       }
     }
   }
 
   service_config {
-    max_instance_count             = 1
-    available_memory               = "256Mi"
-    timeout_seconds                = 60
-    ingress_settings               = "ALLOW_INTERNAL_ONLY"
-    all_traffic_on_latest_revision = true
+    max_instance_count             = var.max
+    available_memory               = var.memory
+    timeout_seconds                = var.health_time
+    ingress_settings               = var.settings
+    all_traffic_on_latest_revision = var.enable
     service_account_email          = google_service_account.service_account.email
     environment_variables = {
       DB_HOST         = "${google_sql_database_instance.sql_instance_terraform.private_ip_address}"
@@ -55,13 +54,14 @@ resource "google_cloudfunctions2_function" "verify_email_function" {
       MYDOMAIN        = var.mydomain_name
     }
     vpc_connector                 = google_vpc_access_connector.serverlessvpc.id
-    vpc_connector_egress_settings = "PRIVATE_RANGES_ONLY"
+    vpc_connector_egress_settings = var.engress
   }
 
   event_trigger {
     trigger_region = var.region
-    event_type     = "google.cloud.pubsub.topic.v1.messagePublished"
+    event_type     = var.event
     pubsub_topic   = google_pubsub_topic.terraform-pub.id
+     retry_policy          = var.retry
   }
 
 }
@@ -69,7 +69,7 @@ resource "google_cloudfunctions2_function_iam_member" "functions_invoker_member"
 
   cloud_function = google_cloudfunctions2_function.verify_email_function.name
 
-  role   = "roles/cloudfunctions.invoker"
+  role   = var.role_cloudfn
   member = "serviceAccount:${google_service_account.service_account.email}"
 }
 
@@ -83,8 +83,8 @@ resource "google_vpc_access_connector" "serverlessvpc" {
 
 resource "google_storage_bucket" "functions_bucket" {
   name          = "${var.project_id}-functions-bucket"
-  location      = "US"
-  force_destroy = true
+  location      =var.loc
+  force_destroy = var.enable
 }
 
 

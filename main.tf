@@ -17,30 +17,28 @@ data "template_file" "metadata_script" {
   }
 }
 
-resource "google_compute_instance" "terraform_instance" {
-  name         = var.instance_name
-  machine_type = var.machine_type
-  zone         = var.zone
+resource "google_compute_region_instance_template" "terraform-template" {
+  name = var.template_name
 
-  boot_disk {
-    initialize_params {
-      image = var.image
-      size  = var.boot_disk_size_gb
+  machine_type = var.machine_type
+  tags = [var.tag_name]
+  disk {
+    source_image = var.image
+    auto_delete  = var.auto_del
+    disk_size_gb =var.boot_disk_size_gb
     }
-  }
-  allow_stopping_for_update = true
+
   network_interface {
     subnetwork = google_compute_subnetwork.terraform_subnet["subnet1"].self_link
-    access_config {}
+  
   }
   metadata_startup_script = data.template_file.metadata_script.rendered
 
   service_account {
     email  = google_service_account.service_account.email
-    scopes = ["logging-write", "monitoring-write", "pubsub"]
+    scopes = var.scopes_list
   }
 }
-
 
 
 # //SERVICE ACCOUNT CREATION 
@@ -53,7 +51,7 @@ resource "google_service_account" "service_account" {
 
 resource "google_project_iam_binding" "service_account_logging_admin" {
   project = var.project_id
-  role    = "roles/logging.admin"
+  role    = var.log_name
 
   members = [
     "serviceAccount:${google_service_account.service_account.email}"
@@ -62,7 +60,7 @@ resource "google_project_iam_binding" "service_account_logging_admin" {
 
 resource "google_project_iam_binding" "service_account_metric_writer" {
   project = var.project_id
-  role    = "roles/monitoring.metricWriter"
+  role    = var.metric_name
 
   members = [
     "serviceAccount:${google_service_account.service_account.email}"
@@ -71,7 +69,7 @@ resource "google_project_iam_binding" "service_account_metric_writer" {
 
 resource "google_project_iam_binding" "pubsub_publisher" {
   project = var.project_id
-  role    = "roles/pubsub.publisher"
+  role    = var.pub_role
 
   members = [
     "serviceAccount:${google_service_account.service_account.email}",
@@ -80,20 +78,12 @@ resource "google_project_iam_binding" "pubsub_publisher" {
 
 resource "google_project_iam_binding" "pubsub_subscriber" {
   project = var.project_id
-  role    = "roles/pubsub.subscriber"
+  role    = var.sub_role
 
   members = [
     "serviceAccount:${google_service_account.service_account.email}",
   ]
 }
-# resource "google_project_iam_binding" "pubsub_invoker" {
-#   project = var.project_id
-#   role    = "roles/cloudfunctions.invoker"
-
-#   members = [
-#     "serviceAccount:${google_service_account.service_account.email}",
-#   ]
-# }
 
 
 //DNS A-RECORD SETUP
@@ -102,5 +92,5 @@ resource "google_dns_record_set" "dns-a-record-terraform" {
   type         = var.recordtype
   ttl          = var.ttl
   managed_zone = var.managedzonename
-  rrdatas      = [google_compute_instance.terraform_instance.network_interface[0].access_config[0].nat_ip]
+   rrdatas      = [google_compute_global_address.lb_ip.address]  
 }

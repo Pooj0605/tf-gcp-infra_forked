@@ -13,12 +13,12 @@ resource "google_pubsub_subscription" "terraform-sub" {
 data "archive_file" "function_source" {
   type        = var.type
   source_dir  = "${path.module}/Cloud_Function"
-  output_path = "${path.module}/lb.zip"
+  output_path = "${path.module}/cloud.zip"
 
 }
 
 resource "google_storage_bucket_object" "function_source" {
-  name   = "lb.zip"
+  name   = "cloud.zip"
   bucket = google_storage_bucket.functions_bucket.name
   source = data.archive_file.function_source.output_path
 }
@@ -33,7 +33,7 @@ resource "google_cloudfunctions2_function" "verify_email_function" {
     source {
       storage_source {
         bucket = google_storage_bucket.functions_bucket.name
-        object = "lb.zip"
+        object = "cloud.zip"
       }
     }
   }
@@ -44,7 +44,7 @@ resource "google_cloudfunctions2_function" "verify_email_function" {
     timeout_seconds                = var.health_time
     ingress_settings               = var.settings
     all_traffic_on_latest_revision = var.enable
-    service_account_email          = google_service_account.service_account.email
+    service_account_email          = google_service_account.cloud_service_account.email
     environment_variables = {
       DB_HOST         = "${google_sql_database_instance.sql_instance_terraform.private_ip_address}"
       DB_USER         = "${google_sql_user.user_terraform.name}"
@@ -65,14 +65,6 @@ resource "google_cloudfunctions2_function" "verify_email_function" {
   }
 
 }
-resource "google_cloudfunctions2_function_iam_member" "functions_invoker_member" {
-
-  cloud_function = google_cloudfunctions2_function.verify_email_function.name
-
-  role   = var.role_cloudfn
-  member = "serviceAccount:${google_service_account.service_account.email}"
-}
-
 
 resource "google_vpc_access_connector" "serverlessvpc" {
   name          = var.connector
@@ -83,14 +75,13 @@ resource "google_vpc_access_connector" "serverlessvpc" {
 
 resource "google_storage_bucket" "functions_bucket" {
   name          = "${var.project_id}-functions-bucket"
-  location      =var.loc
+  location      =var.region
   force_destroy = var.enable
+
+  encryption {
+    default_kms_key_name = google_kms_crypto_key.terraform_bucket_storage_key.id
+  }
+  depends_on = [google_kms_crypto_key_iam_binding.storage_bucket_enc_decrypt_binding]
 }
 
-
-# resource "google_storage_bucket_object" "function_source" {
-#   name   = "testserverless.zip"
-#   bucket = google_storage_bucket.functions_bucket.name
-#   source = data.archive_file.function_source.output_path
-# }
 

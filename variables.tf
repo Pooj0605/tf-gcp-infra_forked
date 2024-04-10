@@ -133,6 +133,14 @@ variable "tag_name" {
   type = string
   default = "webapp"
 }
+variable "kms_role"{
+  type = string
+  default = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
+
+}
+ variable "dev_name" {
+   type =string
+ }
 
 //Variables for SQL intances 
 variable "sql_instance_name" {
@@ -205,6 +213,18 @@ variable "serviceid" {
 variable "serviceaccname" {
   type = string
 }
+variable "cloud_serviceid" {
+  type = string
+}
+variable "cloud_serviceaccname" {
+  type = string
+}
+# variable "storage_bucket_serviceid" {
+#   type = string
+# }
+# variable "storage_bucket_serviceaccname" {
+#   type = string
+# }
 variable "log_name" {
   type = string
   default = "roles/logging.admin"
@@ -384,12 +404,35 @@ variable "maxreplica" {
 }
 variable "coolperiod" {
   type = string
-  default = "60"
+  default = "120"
 }
 variable "target" {
   type = string  
-  default = "0.05"
+  default = "0.02"
 }
 variable "ip" {
   type = string
+  
+}
+
+
+//Varibles for Encrpytion
+variable "key_ring" {
+  type = string
+}
+variable "sql_key" {
+  type = string
+}
+variable "vm_key" {
+  type = string
+}
+variable "storage_key" {
+  type = string
+}
+variable "rotation_sec" {
+  type = string
+  default = "2592000s"
+}
+variable "keyring_name" {
+ type=string 
 }

@@ -73,6 +73,7 @@ resource "google_compute_region_autoscaler" "terraform_autoscaler" {
   cpu_utilization {
       target = var.target
     }
+    
   }
 }
 

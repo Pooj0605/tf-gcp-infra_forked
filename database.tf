@@ -25,6 +25,7 @@ resource "google_sql_database_instance" "sql_instance_terraform" {
       enable_private_path_for_google_cloud_services = true
     }
   }
+    encryption_key_name = google_kms_crypto_key.terraform_sql_key.id
 }
 
 //DATABASE SETUP 
@@ -49,4 +50,19 @@ output "sql_instance_private_ip" {
 output "sql_user_password" {
   value     = random_password.password_terraform.result
   sensitive = true
+}
+
+resource "google_project_service_identity" "cloud_sql_service_identity" {
+  provider = google-beta
+  service  = "sqladmin.googleapis.com"
+  project = var.project_id
+}
+
+resource "google_kms_crypto_key_iam_binding" "sql_crpyto_key_service" {
+  crypto_key_id = google_kms_crypto_key.terraform_sql_key.id
+  role          = var.kms_role
+
+  members = [
+    "serviceAccount:${google_project_service_identity.cloud_sql_service_identity.email}",
+  ]
 }
